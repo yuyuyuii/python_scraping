@@ -40,16 +40,18 @@ soup = BeautifulSoup(response.text, 'html.parser')
 
 # 検索結果のタイトルとリンクを取得
 # 実際の検索結果を見てみるとrクラスの下のaタグがタイトルとリンク部分
-res_link = soup.select('.r > a')  #selectで取得可能
-res_title = soup.select('.r > a > h3')
-
+res_link = soup.select('.r > a')  # selectで取得可能
+# res_title = soup.select('.r > a > h3') # 全てのh3タグを取得
+# res_title = soup.find_all('h3')  # 上と同義
+res_title = soup.find_all("h3", class_="LC20lb DKV0Md")# h3タグでclassがLC20lb DKV0Md,のものを取得
+print(res_title)
 searchlist = []
 url_list = []
 title_text = []
 
 # 取得したリンクの個数分ループでまわす
 for i in range(len(res_link)):
-  title_text = res_title[i].get_text()
+  title_text = res_title[i].get_text() # テキストのみを取得
   url_link = res_link[i].get('href') # URLを取得
   # リストへ格納
   searchlist.append([title_text, url_link]) #二次元配列になる
