@@ -3,65 +3,51 @@ from bs4 import BeautifulSoup
 import csv
 from pprint import pprint
 
-'''
-# googleのURL
-url = 'https://www.google.co.jp/search'
-# google検索でpythonを検索
-r = requests.get(url, params={'q': 'python'})
-# 検索する際のURL
-print(r.url)
-# 検索結果
-print(r.text)
-# soup = BeautifulSoup(r.text, 'html.parser')
-# s = soup.find("h1").get_text()
-# print(s)
-
-'''
+def url_check(url, params, headers):
+  try:
+    response = requests.get(url, params=params, headers=headers)
+    response.raise_for_status()
+  except requests.RequestException as e:
+    print(e)
+  else:
+    return response
 
 # 検索キーワード
 keyword = 'python'
 # 検索数
 num = "100"
 # アクセスするurl
-# url = 'https://www.google.co.jp/search'
 url = 'https://www.google.co.jp/search?hl=ja&num=' + num + '&q=' + keyword
 user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36'
-headers = {"User-Agent": user_agent}
-
-# urlにアクセスし、pythonを検索し、レスポンスデータを変数に格納
-response = requests.get(url, params={'q': keyword}, headers=headers)
-
-# httpステータスコードをチェック(200以外は例外処理を行ってくれる)
-response.raise_for_status()
-
+headers = {"User-Agent": user_agent}  # requestsにおくるheader情報
+params = {'q': keyword} # requestsにおくる検索キーワード
+# urlチェック
+response = url_check(url, params, headers)
 # 取得したHTMLをパース(解析)
 # response.textにデータが入っている
 soup = BeautifulSoup(response.text, 'html.parser')
-
 # 検索結果のタイトルとリンクを取得
-# 実際の検索結果を見てみるとrクラスの下のaタグがタイトルとリンク部分
-res_link = soup.select('.r > a')  # selectで取得可能
-# res_title = soup.select('.r > a > h3') # 全てのh3タグを取得
-# res_title = soup.find_all('h3')  # 上と同義
-res_title = soup.find_all("h3", class_="LC20lb DKV0Md")# h3タグでclassがLC20lb DKV0Md,のものを取得
-print(res_title)
-searchlist = []
-url_list = []
-title_text = []
+# class='r'のaタグ
+res_urls = soup.select('.r > a')  # selectで取得可能
+res_titles = soup.find_all("h3", class_="LC20lb DKV0Md")# h3タグでclassがLC20lb DKV0Md,のものを取得
+title_url = [] # aタグを入れるリスト
+title_text = [] # タイトルを入れるリスト
+searchlists = []  # 検索結果を入れるリスト
 
-# 取得したリンクの個数分ループでまわす
-for i in range(len(res_link)):
-  title_text = res_title[i].get_text() # テキストのみを取得
-  url_link = res_link[i].get('href') # URLを取得
-  # リストへ格納
-  searchlist.append([title_text, url_link]) #二次元配列になる
-# 書き込みモードでファイルオープン
-csvfile = open('scraping.csv', 'w', encoding='utf_8_sig') # エクセルでも文字化けしない
-# writer = csv.writer(csvfile, lineterminator='\n')  # 改行区切り
-writer = csv.writer(csvfile)  # 改行区切り
-writer.writerow(['タイトル', 'URL'])
-writer.writerows(searchlist)  # titleを書き込み
-csvfile.close() #ファイルを閉じる
+# zip関数を使えば、複数のリストを同時にループできる。リストの個数が少ない方に合わせてくれる
+# enumerate関数はindex番号付き
+for index, (title, url) in enumerate(zip(res_titles, res_urls)):
+# for title, url in zip(res_titles, res_urls):
+  title_text = title.get_text()  # テキストのみを取得
+  title_url = url.get('href')  # URLを取得
+  # index番号付きでリストへ格納
+  searchlists.append([index, title_text, title_url])  # 二次元配列になる
+  
+# csv書き込みをwithを使用して書く closeを書かなくて済む
+with open('scraping.csv', 'w', encoding='utf_8_sig') as csvfile:
+  writer = csv.writer(csvfile)
+  writer.writerow(['タイトル', 'URL'])
+  writer.writerows(searchlists)
 
 '''
 # 辞書
