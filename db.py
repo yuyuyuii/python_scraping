@@ -1,4 +1,5 @@
 import mysql.connector as db
+from contextlib import closing
 
 # db接続
 def db_connect():
@@ -13,9 +14,7 @@ def db_connect():
 
 # insert
 def db_insert(sql, value):
-  db = db_connect()
-  cur = db.cursor()
-  cur.executemany(sql, value)
-  cur.close()
-  db.commit()
-  db.close()
+  with closing(db_connect()) as conn:
+    with closing(conn.cursor()) as cur:
+      cur.executemany(sql, value)
+      conn.commit()    
